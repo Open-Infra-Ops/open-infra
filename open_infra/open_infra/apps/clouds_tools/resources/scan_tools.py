@@ -6,7 +6,7 @@
 import traceback
 from functools import wraps
 
-from open_infra.libs.obs_utils import ObsLib
+from open_infra.libs.obs_utils import ObsLib, HuaweiCloud
 from open_infra.utils.common import output_scan_port_excel, output_scan_obs_excel
 from open_infra.utils.lock_util import RWLock
 from open_infra.utils.scan_port import single_scan_port
@@ -25,52 +25,6 @@ class LockObj(object):
     cloud_config = Lock()
     scan_port_rw_lock = RWLock()
     scan_obs_rw_lock = RWLock()
-
-
-def scan_port_lock_decorate(rw=0):
-    """
-    :param rw:  0为读锁，1为写锁.
-    :return:
-    """
-
-    def outer(func):
-        @wraps(func)
-        def inner(*args, **kwargs):
-            try:
-                if rw == 0:
-                    LockObj.scan_port_rw_lock.acquire_read()
-                elif rw == 1:
-                    LockObj.scan_port_rw_lock.acquire_write()
-                return func(*args, **kwargs)
-            finally:
-                LockObj.scan_port_rw_lock.release()
-
-        return inner
-
-    return outer
-
-
-def scan_obs_lock_decorate(rw=0):
-    """
-    :param rw:  0为读锁，1为写锁.
-    :return:
-    """
-
-    def outer(func):
-        @wraps(func)
-        def inner(*args, **kwargs):
-            try:
-                if rw == 0:
-                    LockObj.scan_obs_rw_lock.acquire_read()
-                elif rw == 1:
-                    LockObj.scan_obs_rw_lock.acquire_write()
-                return func(*args, **kwargs)
-            finally:
-                LockObj.scan_obs_rw_lock.release()
-
-        return inner
-
-    return outer
 
 
 class BaseStatus(object):
@@ -134,79 +88,11 @@ class ScanBaseTools(object):
         pass
 
     @staticmethod
-    def get_cloud_account():
-        """get all cloud account"""
-        account_list = ScanBaseTools.get_cloud_config()
-        ret_list = list()
-        for account_info in account_list:
-            account_temp = dict()
-            account_temp["account"] = account_info["account"]
-            zone_list = [settings.ZONE_ALIAS_DICT.get(project_temp["zone"], project_temp['zone']) for project_temp in
-                         account_info["project_info"]]
-            account_temp["zone"] = "，".join(zone_list)
-            ret_list.append(account_temp)
-        return ret_list
-
-    @staticmethod
-    def get_cloud_config():
-        obs_lib = ObsLib(settings.AK, settings.SK, settings.URL)
-        content = obs_lib.get_obs_data(settings.DOWNLOAD_BUCKET_NAME, settings.DOWNLOAD_KEY_NAME)
-        return content
-
-    @staticmethod
     def get_project_info(ak, sk):
-        clouds_config = ScanBaseTools.get_cloud_config()
-        for cloud_info in clouds_config:
-            if cloud_info["ak"] == ak and cloud_info["sk"] == sk:
-                return cloud_info["project_info"]
-        return list()
+        return HuaweiCloud.get_project_zone(ak, sk)
 
     def query_data(self, account_list):
         raise NotImplemented()
-
-
-class ScanPorts(ScanBaseTools):
-    def query_data(self, account_list):
-        """query progress"""
-        tcp_info, udp_info, tcp_server_info = dict(), dict(), dict()
-        config_obj = self.get_cloud_config()
-        for config_info in config_obj:
-            if config_info["account"] not in account_list:
-                continue
-            ak = config_info["ak"]
-            sk = config_info["sk"]
-            for project_temp in config_info["project_info"]:
-                project_id = project_temp["project_id"]
-                zone = project_temp["zone"]
-                key = (ak, sk, project_id, zone)
-                scan_port_info = ScanPortInfo.get(key)
-                logger.error("[ScanPorts:query_data]: key:({}, {}, {}, {}), value:{}".format(ak[:5], sk[:5], project_id, zone, scan_port_info))
-                if scan_port_info and scan_port_info["status"] == ScanPortStatus.finish:
-                    tcp_info.update(scan_port_info["data"]["tcp_info"])
-                    udp_info.update(scan_port_info["data"]["udp_info"])
-                    tcp_server_info.update(scan_port_info["data"]["tcp_server_info"])
-        content = output_scan_port_excel(tcp_info, udp_info, tcp_server_info)
-        return content
-
-
-class ScanObs(ScanBaseTools):
-    def query_data(self, account_list):
-        anonymous_file_list, anonymous_bucket_list, anonymous_data_data = list(), list(), list()
-        config_obj = self.get_cloud_config()
-        for config_info in config_obj:
-            account = config_info["account"]
-            if account not in account_list:
-                continue
-            ak = config_info["ak"]
-            sk = config_info["sk"]
-            key = (ak, sk, account)
-            scan_obs_info = ScanObsInfo.get(key)
-            logger.error("[ScanObs:query_data]: key:({}, {}, {}), value:{}".format(ak[:5], sk[:5], account, scan_obs_info))
-            if scan_obs_info and scan_obs_info["status"] == ScanObsStatus.finish:
-                anonymous_file_list.extend(scan_obs_info["data"]["anonymous_file"])
-                anonymous_bucket_list.extend(scan_obs_info["data"]["anonymous_bucket"])
-                anonymous_data_data.extend(scan_obs_info["data"]["anonymous_data"])
-        return output_scan_obs_excel(anonymous_file_list, anonymous_bucket_list, anonymous_data_data)
 
 
 class SingleScanPorts(ScanBaseTools):

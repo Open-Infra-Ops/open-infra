@@ -2,7 +2,7 @@ import json
 from datetime import datetime
 
 from django.http import HttpResponse
-from clouds_tools.resources.scan_tools import ScanPorts, ScanObs, SingleScanPorts, SingleScanObs
+from clouds_tools.resources.scan_tools import SingleScanPorts, SingleScanObs
 from open_infra.utils.auth_permisson import AuthView
 from open_infra.utils.common import assemble_api_result
 from open_infra.utils.api_error_code import ErrCode
@@ -12,52 +12,6 @@ from logging import getLogger
 from open_infra.utils.default_port_list import HighRiskPort
 
 logger = getLogger("django")
-
-
-class ScanPortView(AuthView):
-    def get(self, request):
-        """get all account"""
-        scan_ports = ScanPorts()
-        clouds_account = scan_ports.get_cloud_account()
-        return clouds_account
-
-    def post(self, request):
-        """output a file"""
-        dict_data = json.loads(request.body)
-        if dict_data.get("account") is None or not isinstance(dict_data["account"], list):
-            return assemble_api_result(ErrCode.STATUS_PARAMETER_ERROR)
-        logger.info("ScanPortView collect:{}".format(dict_data["account"]))
-        scan_ports = ScanPorts()
-        content = scan_ports.query_data(dict_data["account"])
-        res = HttpResponse(content=content, content_type="application/octet-stream")
-        now_date = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-        filename = settings.EXCEL_NAME.format(now_date)
-        res["Content-Disposition"] = 'attachment;filename="{}"'.format(filename)
-        res['charset'] = 'utf-8'
-        return res
-
-
-class ScanObsView(AuthView):
-    def get(self, request):
-        """get all account"""
-        scan_obs = ScanObs()
-        clouds_account = scan_obs.get_cloud_account()
-        return clouds_account
-
-    def post(self, request):
-        """output a file"""
-        dict_data = json.loads(request.body)
-        if dict_data.get("account") is None or not isinstance(dict_data["account"], list):
-            return assemble_api_result(ErrCode.STATUS_PARAMETER_ERROR)
-        logger.info("ScanObsView collect:{}".format(dict_data["account"]))
-        scan_obs = ScanObs()
-        data = scan_obs.query_data(dict_data["account"])
-        res = HttpResponse(content=data, content_type="application/octet-stream")
-        now_date = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-        filename = settings.SCAN_OBS_EXCEL_NAME.format(now_date)
-        res["Content-Disposition"] = 'attachment;filename="{}"'.format(filename)
-        res['charset'] = 'utf-8'
-        return res
 
 
 class SingleScanPortView(AuthView):
