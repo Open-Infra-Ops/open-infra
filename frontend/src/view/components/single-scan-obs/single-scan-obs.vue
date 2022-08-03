@@ -87,7 +87,7 @@ export default {
         }
         if (res.headers['content-type'] === 'application/octet-stream') {
           let strDate = getStrDate()
-          const fileName = 'IP端口扫描统计表_' + strDate + '.xlsx'
+          const fileName = '对象系统扫描统计表_' + strDate + '.xlsx'
           blobDownload(res.data, fileName)
           if (this.timer) {
             clearInterval(this.timer)

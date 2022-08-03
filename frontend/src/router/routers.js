@@ -48,56 +48,7 @@ export default [
           notCache: true,
           icon: 'md-home'
         },
-        component: () => import('@/view/single-page/home')
-      }
-    ]
-  },
-  {
-    path: '/message',
-    name: 'message',
-    component: Main,
-    meta: {
-      hideInBread: true,
-      hideInMenu: true
-    },
-    children: [
-      {
-        path: 'message_page',
-        name: 'message_page',
-        meta: {
-          icon: 'md-notifications',
-          title: '消息中心'
-        },
-        component: () => import('@/view/single-page/message/index.vue')
-      }
-    ]
-  },
-  {
-    path: '/tools',
-    name: 'Tools',
-    meta: {
-      icon: 'logo-buffer',
-      title: '工具'
-    },
-    component: Main,
-    children: [
-      {
-        path: 'scan_port',
-        name: 'scan_port',
-        meta: {
-          icon: 'ios-stats',
-          title: '端口扫描'
-        },
-        component: () => import('@/view/components/scan-port/scan-port.vue')
-      },
-      {
-        path: 'scan_obs',
-        name: 'scan_obs',
-        meta: {
-          icon: 'ios-stats-outline',
-          title: '对象系统扫描'
-        },
-        component: () => import('@/view/components/scan-obs/scan-obs.vue')
+        component: () => import('@/view/components/single-scan-port/single-scan-port')
       },
       {
         path: 'single_scan_port',
@@ -128,6 +79,82 @@ export default [
       }
     ]
   },
+  {
+    path: '/message',
+    name: 'message',
+    component: Main,
+    meta: {
+      hideInBread: true,
+      hideInMenu: true
+    },
+    children: [
+      {
+        path: 'message_page',
+        name: 'message_page',
+        meta: {
+          icon: 'md-notifications',
+          title: '消息中心'
+        },
+        component: () => import('@/view/single-page/message/index.vue')
+      }
+    ]
+  },
+  // {
+  //   path: '/tools',
+  //   name: 'Tools',
+  //   meta: {
+  //     icon: 'logo-buffer',
+  //     title: '工具'
+  //   },
+  //   component: Main,
+  //   children: [
+  //     {
+  //       path: 'scan_port',
+  //       name: 'scan_port',
+  //       meta: {
+  //         icon: 'ios-stats',
+  //         title: '端口扫描'
+  //       },
+  //       component: () => import('@/view/components/scan-port/scan-port.vue')
+  //     },
+  //     {
+  //       path: 'scan_obs',
+  //       name: 'scan_obs',
+  //       meta: {
+  //         icon: 'ios-stats-outline',
+  //         title: '对象系统扫描'
+  //       },
+  //       component: () => import('@/view/components/scan-obs/scan-obs.vue')
+  //     },
+  //     {
+  //       path: 'single_scan_port',
+  //       name: 'single_scan_port',
+  //       meta: {
+  //         icon: 'ios-basketball',
+  //         title: '单个端口扫描'
+  //       },
+  //       component: () => import('@/view/components/single-scan-port/single-scan-port')
+  //     },
+  //     {
+  //       path: 'single_scan_obs',
+  //       name: 'single_scan_obs',
+  //       meta: {
+  //         icon: 'ios-basketball-outline',
+  //         title: '单个对象系统扫描'
+  //       },
+  //       component: () => import('@/view/components/single-scan-obs/single-scan-obs')
+  //     },
+  //     {
+  //       path: 'high_risk_port',
+  //       name: 'high_risk_port',
+  //       meta: {
+  //         icon: 'md-basketball',
+  //         title: '端口扫描列表'
+  //       },
+  //       component: () => import('@/view/components/port-list/port-list')
+  //     }
+  //   ]
+  // },
   {
     path: '/argu',
     name: 'argu',
