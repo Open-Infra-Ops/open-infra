@@ -91,7 +91,7 @@ DATABASES = {
         'PORT': os.getenv("mysql_port"),  # 数据库端口
         'USER': os.getenv("mysql_user"),  # 数据库用户名
         'PASSWORD': os.getenv("mysql_password"),  # 数据库用户密码
-        'NAME': 'open_infra'  # 数据库名字
+        'NAME': os.getenv("mysql_database")  # 数据库名字
     }
 }
 # DATABASE_ROUTERS = ['meiduo_mall.utils.db_router.MasterSlaveDBRouter']
