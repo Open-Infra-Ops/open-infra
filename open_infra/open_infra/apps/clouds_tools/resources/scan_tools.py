@@ -4,9 +4,7 @@
 # @FileName: scan_tools.py
 # @Software: PyCharm
 import traceback
-from functools import wraps
-
-from open_infra.libs.obs_utils import ObsLib, HuaweiCloud
+from open_infra.libs.obs_utils import HuaweiCloud
 from open_infra.utils.common import output_scan_port_excel, output_scan_obs_excel
 from open_infra.utils.lock_util import RWLock
 from open_infra.utils.scan_port import single_scan_port
@@ -100,17 +98,22 @@ class SingleScanPorts(ScanBaseTools):
     @staticmethod
     def collect_thread(ak, sk, zone, project_id):
         """collect data"""
-        tcp_ret_dict, udp_ret_dict, tcp_server_info = single_scan_port(ak, sk, zone, project_id)
-        dict_data = {
-            "tcp_info": tcp_ret_dict,
-            "udp_info": udp_ret_dict,
-            "tcp_server_info": tcp_server_info
-        }
         key = (ak, sk, project_id, zone)
-        logger.info("[collect_thread] collect single scan port: key:({}, {}, {}, {}), data:{}".format(ak[:5], sk[:5],
-                                                                                                      project_id, zone,
-                                                                                                      dict_data))
-        ScanPortInfo.set({key: {"status": ScanPortStatus.finish, "data": dict_data}})
+        try:
+            tcp_ret_dict, udp_ret_dict, tcp_server_info = single_scan_port(ak, sk, zone, project_id)
+            dict_data = {
+                "tcp_info": tcp_ret_dict,
+                "udp_info": udp_ret_dict,
+                "tcp_server_info": tcp_server_info
+            }
+            logger.info(
+                "[collect_thread] collect single scan port: key:({}, {}, {}, {}), data:{}".format(ak[:5], sk[:5],
+                                                                                                  project_id, zone,
+                                                                                                  dict_data))
+            ScanPortInfo.set({key: {"status": ScanPortStatus.finish, "data": dict_data}})
+        except Exception as e:
+            logger.error("[SingleScanPorts] collect_thread:{}".format(e))
+            ScanPortInfo.delete_key(key)
 
     def start_collect_thread(self, ak, sk):
         """start a collect thread"""
@@ -126,11 +129,11 @@ class SingleScanPorts(ScanBaseTools):
             logger.error("[start_collect_thread] connect:{}, {}".format(e, traceback.format_exc()))
             return False
         for project_obj in project_info:
+            project_id = project_obj["project_id"]
+            zone = project_obj["zone"]
+            key = (ak, sk, project_id, zone)
             try:
                 # 1.judge status
-                project_id = project_obj["project_id"]
-                zone = project_obj["zone"]
-                key = (ak, sk, project_id, zone)
                 single_scan_port_info = ScanPortInfo.get(key)
                 if single_scan_port_info is not None:
                     continue
@@ -143,6 +146,7 @@ class SingleScanPorts(ScanBaseTools):
             except Exception as e:
                 logger.error(
                     "[start_collect_thread] collect data failed:{}, traceback:{}".format(e, traceback.format_exc()))
+                ScanPortInfo.delete_key(key)
         return True
 
     # noinspection PyMethodMayBeStatic
@@ -174,16 +178,21 @@ class SingleScanObs(ScanBaseTools):
     @staticmethod
     def collect_thread(ak, sk, account):
         """collect data"""
-        list_sensitive_file, list_anonymous_bucket, list_anonymous_data = single_scan_obs(ak, sk, account)
-        dict_data = {
-            "anonymous_file": list_sensitive_file or [],
-            "anonymous_bucket": list_anonymous_bucket or [],
-            "anonymous_data": list_anonymous_data or []
-        }
         key = (ak, sk, account)
-        logger.info("[SingleScanObs] collect single scan_obs: key({},{},{}), data:{}".format(ak[:5], sk[:5], account,
-                                                                                             dict_data))
-        ScanObsInfo.set({key: {"status": ScanObsStatus.finish, "data": dict_data}})
+        try:
+            list_sensitive_file, list_anonymous_bucket, list_anonymous_data = single_scan_obs(ak, sk, account)
+            dict_data = {
+                "anonymous_file": list_sensitive_file or [],
+                "anonymous_bucket": list_anonymous_bucket or [],
+                "anonymous_data": list_anonymous_data or []
+            }
+            logger.info(
+                "[SingleScanObs] collect single scan_obs: key({},{},{}), data:{}".format(ak[:5], sk[:5], account,
+                                                                                         dict_data))
+            ScanObsInfo.set({key: {"status": ScanObsStatus.finish, "data": dict_data}})
+        except Exception as e:
+            logger.error("[collect_thread] e:{}".format(e))
+            ScanObsInfo.delete_key(key)
 
     def start_collect_thread(self, ak, sk, account):
         """start a collect thread"""
@@ -211,7 +220,6 @@ class SingleScanObs(ScanBaseTools):
         """query progress"""
         content = str()
         key = (ak, sk, account)
-        logger.info("now collect obs data:{}".format(key))
         single_scan_obs_info = ScanObsInfo.get(key)
         if single_scan_obs_info is not None and single_scan_obs_info["status"] == ScanObsStatus.handler:
             return 0, content

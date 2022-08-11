@@ -56,7 +56,6 @@ class SingleScanObsView(AuthView):
         ak = dict_data.get("ak").strip()
         sk = dict_data.get("sk").strip()
         account = dict_data.get("account").strip()
-        logger.info("ScanObsView collect:{}".format(account))
         single_scan_obs = SingleScanObs()
         result = single_scan_obs.start_collect_thread(ak, sk, account)
         if result:
