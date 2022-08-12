@@ -135,12 +135,12 @@ class EipTools(object):
     @classmethod
     def get_sensitive_data(cls, content):
         sensitive_dict_data = dict()
-        try:
-            name = cls._ex.extract_name(content)
-            if name:
-                sensitive_dict_data["name"] = name
-        except Exception:
-            pass
+        # try:
+        #     name = cls._ex.extract_name(content)
+        #     if name:
+        #         sensitive_dict_data["name"] = name
+        # except Exception:
+        #     pass
         sensitive_email = cls._ex.extract_email(content)
         sensitive_phone = cls._ex.extract_cellphone(content, nation='CHN')
         if sensitive_email:
